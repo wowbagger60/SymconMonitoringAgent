@@ -1,0 +1,14 @@
+{
+    "id": "{3561CFA8-F024-47BC-BD34-327929C72D20}",
+    "name": "Heartbeat Agent",
+    "type": 3,
+    "vendor": "Cassanis Automation",
+    "url": "https://github.com/wowbagger60/SymconMonitoringAgent",
+    "aliases": [
+        "Monitoring Heartbeat Agent"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "CAHB"
+}

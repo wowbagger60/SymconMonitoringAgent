@@ -1,0 +1,18 @@
+{
+    "translations": {
+        "de": {
+            "Heartbeat Agent": "Heartbeat-Agent",
+            "Monitoring Heartbeat Agent": "Monitoring-Heartbeat-Agent",
+            "Active": "Aktiv",
+            "System ID": "System-ID",
+            "Heartbeat endpoint": "Heartbeat-Endpunkt",
+            "Shared secret": "Gemeinsames Secret",
+            "Interval": "Intervall",
+            " seconds": " Sekunden",
+            "Send heartbeat now": "Heartbeat jetzt senden",
+            "Inactive": "Inaktiv",
+            "Configuration incomplete or invalid": "Konfiguration unvollständig oder ungültig",
+            "Heartbeat transmission failed": "Heartbeat-Übertragung fehlgeschlagen"
+        }
+    }
+}

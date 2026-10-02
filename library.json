@@ -1,0 +1,12 @@
+{
+    "id": "{64C602D4-8DE1-4E5A-A2F8-3499F899B79A}",
+    "author": "Cassanis Automation",
+    "name": "Symcon Monitoring Agent",
+    "url": "https://github.com/wowbagger60/SymconMonitoringAgent",
+    "compatibility": {
+        "version": "8.1"
+    },
+    "version": "1.0",
+    "build": 2,
+    "date": 1790899200
+}

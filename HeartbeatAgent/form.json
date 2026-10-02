@@ -1,0 +1,61 @@
+{
+    "elements": [
+        {
+            "type": "CheckBox",
+            "name": "Active",
+            "caption": "Active"
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "SystemID",
+            "caption": "System ID"
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "Endpoint",
+            "caption": "Heartbeat endpoint"
+        },
+        {
+            "type": "PasswordTextBox",
+            "name": "SharedSecret",
+            "caption": "Shared secret"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "IntervalSeconds",
+            "caption": "Interval",
+            "suffix": " seconds",
+            "minimum": 30,
+            "maximum": 3600
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Send heartbeat now",
+            "onClick": "IPS_RequestAction($id, 'SendHeartbeat', true);"
+        }
+    ],
+    "status": [
+        {
+            "code": 102,
+            "icon": "active",
+            "caption": "Active"
+        },
+        {
+            "code": 104,
+            "icon": "inactive",
+            "caption": "Inactive"
+        },
+        {
+            "code": 200,
+            "icon": "error",
+            "caption": "Configuration incomplete or invalid"
+        },
+        {
+            "code": 201,
+            "icon": "error",
+            "caption": "Heartbeat transmission failed"
+        }
+    ]
+}
