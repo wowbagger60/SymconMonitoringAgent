@@ -144,14 +144,12 @@ class HeartbeatAgent extends IPSModuleStrict
                 'error'       => $request['error']
             ];
 
-            $this->SetBuffer(
-                'LastResult',
-                json_encode(
-                    $result,
-                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
-                )
+            $resultJson = json_encode(
+                $result,
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
             );
-            $this->SendDebug('Heartbeat', $result, 0);
+            $this->SetBuffer('LastResult', $resultJson);
+            $this->SendDebug('Heartbeat', $resultJson, 0);
 
             if ($request['success']) {
                 $this->SetStatus(
