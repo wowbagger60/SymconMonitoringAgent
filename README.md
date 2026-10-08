@@ -6,6 +6,8 @@ Monitoring-Endpunkt.
 
 Das Modul legt keine Variablen an. Betriebszustand und Übertragungsfehler werden
 über den Instanzstatus, das Debugfenster und das normale Symcon-Log gemeldet.
+Zusätzlich meldet es den Zeitpunkt des aktuellen Kernelstarts und ob der
+vorherige Symcon-Prozess eine saubere Shutdown-Meldung absetzen konnte.
 
 ## Installation
 
@@ -31,6 +33,13 @@ Modul fünf Sekunden. Danach gilt das konfigurierte Intervall.
 
 Die Sequenznummer wird vor dem Versand in einem Modul-Buffer gespeichert und
 auch bei einem fehlgeschlagenen Versuch nicht wiederverwendet.
+
+Der erste Heartbeat nach der Installation oder dem Update auf Version 1.1
+meldet den vorherigen Shutdown als unbekannt. Danach speichert das Modul den
+Lebenszyklus intern in persistenten Attributen. Ein empfangener
+`IPS_KERNELSHUTDOWN` gilt als sauber; fehlt er vor einem geänderten
+Kernel-Startzeitpunkt, wird der Start als Folge eines harten Abbruchs gemeldet.
+Dabei entstehen keine sichtbaren Variablen.
 
 ## Datenschutz und Sicherheit
 

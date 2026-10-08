@@ -5,8 +5,16 @@ declare(strict_types=1);
 class HeartbeatAgent extends IPSModuleStrict
 {
     private const PROTOCOL_VERSION = 1;
-    private const AGENT_VERSION = '1.0.0';
+    private const AGENT_VERSION = '1.1.0';
     private const TIMEOUT_SECONDS = 15;
+
+    private const LIFECYCLE_UNKNOWN = 0;
+    private const LIFECYCLE_RUNNING = 1;
+    private const LIFECYCLE_CLEAN_SHUTDOWN = 2;
+
+    private const SHUTDOWN_UNKNOWN = -1;
+    private const SHUTDOWN_UNCLEAN = 0;
+    private const SHUTDOWN_CLEAN = 1;
 
     private const STATUS_ACTIVE = 102;
     private const STATUS_INACTIVE = 104;
@@ -26,13 +34,18 @@ class HeartbeatAgent extends IPSModuleStrict
         $this->RegisterPropertyString('SharedSecret', '');
         $this->RegisterPropertyInteger('IntervalSeconds', 60);
 
+        $this->RegisterAttributeInteger('ObservedKernelStart', 0);
+        $this->RegisterAttributeInteger('LifecycleMarker', self::LIFECYCLE_UNKNOWN);
+        $this->RegisterAttributeInteger('PreviousShutdownState', self::SHUTDOWN_UNKNOWN);
+
         $this->RegisterTimer(
             'HeartbeatTimer',
             0,
             "IPS_RequestAction(\$_IPS['TARGET'], 'SendHeartbeat', false);"
         );
 
-        $this->RegisterMessage(0, IPS_KERNELMESSAGE);
+        $this->RegisterMessage(0, IPS_KERNELSTARTED);
+        $this->RegisterMessage(0, IPS_KERNELSHUTDOWN);
     }
 
     public function ApplyChanges(): void
@@ -40,6 +53,10 @@ class HeartbeatAgent extends IPSModuleStrict
         parent::ApplyChanges();
 
         $this->SetTimerInterval('HeartbeatTimer', 0);
+
+        if (IPS_GetKernelRunlevel() === KR_READY) {
+            $this->ObserveCurrentKernelStart();
+        }
 
         if (!$this->ReadPropertyBoolean('Active')) {
             $this->SetStatus(self::STATUS_INACTIVE);
@@ -64,9 +81,17 @@ class HeartbeatAgent extends IPSModuleStrict
 
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
-        if ($Message !== IPS_KERNELMESSAGE || ($Data[0] ?? null) !== KR_READY) {
+        if ($Message === IPS_KERNELSHUTDOWN) {
+            $this->WriteAttributeInteger('LifecycleMarker', self::LIFECYCLE_CLEAN_SHUTDOWN);
+            $this->SendDebug('Lifecycle', 'Clean shutdown observed', 0);
             return;
         }
+
+        if ($Message !== IPS_KERNELSTARTED) {
+            return;
+        }
+
+        $this->ObserveCurrentKernelStart();
 
         if (!$this->ReadPropertyBoolean('Active') || $this->GetConfigurationError() !== '') {
             return;
@@ -119,6 +144,7 @@ class HeartbeatAgent extends IPSModuleStrict
                 'sequence'       => $sequence,
                 'sentAt'         => $startedAt,
                 'kernelStarted'  => IPS_GetKernelStartTime(),
+                'previousShutdownClean' => $this->GetPreviousShutdownClean(),
                 'symconVersion'  => IPS_GetKernelVersion(),
                 'agentVersion'   => self::AGENT_VERSION
             ];
@@ -141,6 +167,7 @@ class HeartbeatAgent extends IPSModuleStrict
                 'sequence'    => $sequence,
                 'httpCode'    => $request['httpCode'],
                 'durationMs'  => $request['durationMs'],
+                'previousShutdownClean' => $this->GetPreviousShutdownClean(),
                 'error'       => $request['error']
             ];
 
@@ -276,6 +303,50 @@ class HeartbeatAgent extends IPSModuleStrict
         }
 
         return '';
+    }
+
+    private function ObserveCurrentKernelStart(): void
+    {
+        $kernelStarted = IPS_GetKernelStartTime();
+        if ($kernelStarted < 1 || $this->ReadAttributeInteger('ObservedKernelStart') === $kernelStarted) {
+            return;
+        }
+
+        $previousKernelStarted = $this->ReadAttributeInteger('ObservedKernelStart');
+        $lifecycleMarker = $this->ReadAttributeInteger('LifecycleMarker');
+
+        if ($previousKernelStarted === 0 || $lifecycleMarker === self::LIFECYCLE_UNKNOWN) {
+            $shutdownState = self::SHUTDOWN_UNKNOWN;
+        } elseif ($lifecycleMarker === self::LIFECYCLE_CLEAN_SHUTDOWN) {
+            $shutdownState = self::SHUTDOWN_CLEAN;
+        } else {
+            $shutdownState = self::SHUTDOWN_UNCLEAN;
+        }
+
+        $this->WriteAttributeInteger('PreviousShutdownState', $shutdownState);
+        $this->WriteAttributeInteger('ObservedKernelStart', $kernelStarted);
+        $this->WriteAttributeInteger('LifecycleMarker', self::LIFECYCLE_RUNNING);
+
+        $this->SendDebug(
+            'Lifecycle',
+            json_encode(
+                [
+                    'kernelStarted' => $kernelStarted,
+                    'previousShutdownClean' => $this->GetPreviousShutdownClean()
+                ],
+                JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+            ),
+            0
+        );
+    }
+
+    private function GetPreviousShutdownClean(): ?bool
+    {
+        return match ($this->ReadAttributeInteger('PreviousShutdownState')) {
+            self::SHUTDOWN_CLEAN => true,
+            self::SHUTDOWN_UNCLEAN => false,
+            default => null
+        };
     }
 
     private function RestoreRegularTimer(): void

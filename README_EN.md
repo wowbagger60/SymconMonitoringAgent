@@ -5,6 +5,10 @@ heartbeat to the central monitoring endpoint.
 
 The module creates no variables. Its instance status, the debug log and the
 regular Symcon log provide operational diagnostics.
+It also reports the current kernel start time and whether the previous Symcon
+process emitted a clean shutdown message. The first result after installing or
+upgrading to version 1.1 is `unknown`; later results are tracked in persistent
+module attributes without creating visible variables.
 
 ## Configuration
 
